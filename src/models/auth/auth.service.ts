@@ -18,7 +18,7 @@ export class AuthService {
         "https://www.googleapis.com/auth/userinfo.email",
     ];
 
-    constructor(private userService: UserService) {
+    constructor(private readonly userService: UserService) {
         this.oauth2Client = new OAuth2(
             config.googleAuth.GOOGLE_CONSUMER_KEY,
             config.googleAuth.GOOGLE_CONSUMER_SECRET,

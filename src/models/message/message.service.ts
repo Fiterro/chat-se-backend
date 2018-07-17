@@ -11,4 +11,11 @@ export class MessagesService {
     async findByChatId(chatId: number): Promise<Message[]> {
         return await this.MessageRepository.findAll<Message>({where: {chatId}});
     }
+
+    async create(chatId: number, text: string): Promise<Message> {
+        return await this.MessageRepository.create({
+            chatId,
+            text,
+        });
+    }
 }

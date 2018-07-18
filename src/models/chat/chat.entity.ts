@@ -1,4 +1,6 @@
-import { Column, CreatedAt, Model, Table, UpdatedAt } from "sequelize-typescript";
+import { Column, CreatedAt, HasMany, Model, Table, UpdatedAt } from "sequelize-typescript";
+
+import { ChatMessage } from "../chat-message/chat-message.entity";
 
 @Table({
     tableName: "chats",
@@ -21,4 +23,7 @@ export class Chat extends Model<Chat> {
 
     @UpdatedAt
     updatedAt: Date;
+
+    @HasMany(() => ChatMessage)
+    chatMessages: ChatMessage[];
 }

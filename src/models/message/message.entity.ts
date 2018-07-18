@@ -1,4 +1,6 @@
-import { Column, CreatedAt, Model, Table, UpdatedAt } from "sequelize-typescript";
+import { BelongsTo, Column, CreatedAt, Default, ForeignKey, Model, Table, UpdatedAt } from "sequelize-typescript";
+
+import { User } from "../user/user.entity";
 
 @Table({
     tableName: "messages",
@@ -14,19 +16,25 @@ export class Message extends Model<Message> {
     id: number;
 
     @Column
-    chatId: number;
-
-    @Column
-    senderId: number;
-
-    @Column
     text: string;
 
+    // TODO: implement message status
     @Column
     status: number;
 
     @Column
     viewCount: number;
+
+    @ForeignKey(() => User)
+    @Column({field: "sender_id"})
+    senderId: number;
+
+    @Default(() => Date.now())
+    @Column({field: "sent_at"})
+    sentAt: Date;
+
+    @BelongsTo(() => User)
+    sender: User;
 
     @CreatedAt
     createdAt: Date;

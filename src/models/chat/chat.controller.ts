@@ -63,7 +63,7 @@ export class ChatController extends ServerController {
 
     @Post("messages")
     async sendMessage(@Res() res, @Body() body) {
-        return this.messagesService.create(body.chatId, body.text)
+        return this.messagesService.create(body.chatId, body.text, body.senderId)
             .then((result) => {
                 if (!result) {
                     throw new InternalServerErrorException("Message not created");

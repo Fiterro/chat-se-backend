@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 
 import { DatabaseModule } from "../../utils/database/database.module";
+import { ChatMessagesProviders } from "../chat-message/chat-message.providers";
 import { MessagesProviders } from "./message.providers";
 import { MessagesService } from "./message.service";
 
@@ -9,6 +10,7 @@ import { MessagesService } from "./message.service";
     providers: [
         MessagesService,
         ...MessagesProviders,
+        ...ChatMessagesProviders,
     ],
     exports: [MessagesService],
 })

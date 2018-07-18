@@ -2,6 +2,7 @@ import { Sequelize } from "sequelize-typescript";
 
 import { config } from "../../../config";
 import { SEQUELIZE_TOKEN } from "../../app.constants";
+import { ChatMessage } from "../../models/chat-message/chat-message.entity";
 import { User } from "../../models/user/user.entity";
 import { Chat } from "../../models/chat/chat.entity";
 import { Message } from "../../models/message/message.entity";
@@ -19,7 +20,7 @@ export const DatabaseProviders = [
                 dialect: config.db.dialect,
                 operatorsAliases: false,
             });
-            sequelize.addModels([User, Chat, Message]);
+            sequelize.addModels([User, Chat, Message, ChatMessage]);
             await sequelize.sync();
             return sequelize;
         },

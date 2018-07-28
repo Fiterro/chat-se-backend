@@ -26,6 +26,19 @@ export class ChatController extends ServerController {
             });
     }
 
+    @Post()
+    async createChat(@Body() body, @Res() res) {
+        return this.chatService.create(body.name)
+            .then((result) => {
+                res.status(HttpStatus.CREATED);
+                ChatController.success(res, result);
+            })
+            .catch((error) => {
+                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                return ChatController.failure(res, error);
+            });
+    }
+
     @Get(":id")
     async findOne(@Res() res, @Param("id") id) {
         return this.chatService.getOne(id)

@@ -15,4 +15,8 @@ export class ChatService {
     async getOne(id: number): Promise<Chat> {
         return await this.ChatRepository.findById<Chat>(id);
     }
+
+    async create(name: string): Promise<Chat> {
+        return await this.ChatRepository.create<Chat>({name});
+    }
 }

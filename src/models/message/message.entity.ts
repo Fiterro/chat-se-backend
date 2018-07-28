@@ -1,6 +1,6 @@
-import { BelongsTo, Column, CreatedAt, Default, ForeignKey, Model, Table, UpdatedAt } from "sequelize-typescript";
+import {BelongsTo, Column, CreatedAt, Default, DefaultScope, ForeignKey, Model, Table, UpdatedAt} from "sequelize-typescript";
 
-import { User } from "../user/user.entity";
+import {User} from "../user/user.entity";
 
 @Table({
     tableName: "messages",
@@ -17,13 +17,6 @@ export class Message extends Model<Message> {
 
     @Column
     text: string;
-
-    // TODO: implement message status
-    @Column
-    status: number;
-
-    @Column
-    viewCount: number;
 
     @ForeignKey(() => User)
     @Column({field: "sender_id"})

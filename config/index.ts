@@ -20,7 +20,7 @@ export const config = {
     googleAuth: {
         GOOGLE_CONSUMER_KEY: "386387919756-hl25j9g3h7f2ehmo1khh0vu23u8dsf1c.apps.googleusercontent.com",
         GOOGLE_CONSUMER_SECRET: "YntjPkqO32fmu0uHnbPmGPcs",
-        GOOGLE_CALLBACK_URL: "http://localhost:4201/oauth",
+        GOOGLE_CALLBACK_URL: "http://localhost:4200/oauth",
     },
     jwtKey: "some-kind-of-js-secret-key",
     jwtLifeTime: 24 * 60 * 60, // 1 day

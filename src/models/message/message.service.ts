@@ -4,19 +4,27 @@ import { Transaction } from "sequelize";
 import { SEQUELIZE_REPOS } from "../../app.constants";
 import { ChatMessage } from "../chat-message/chat-message.entity";
 import { Message } from "./message.entity";
+import {User} from "../user/user.entity";
+import { MessageDto } from "../../dto/message.dto";
 
 @Injectable()
 export class MessagesService {
     constructor(@Inject(SEQUELIZE_REPOS.MESSAGES) private readonly MessageRepository: typeof Message,
-                @Inject("ChatMessagesRepository") private readonly ChatMessagesRepository: typeof ChatMessage) {
+                @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage) {
     }
 
-    async findByChatId(chatId: number): Promise<Message[]> {
+    async findByChatId(chatId: number): Promise<MessageDto[]> {
         // TODO: pg db rework of message storing
-        return await this.MessageRepository
-            .findAll<Message>({
+        return await this.ChatMessagesRepository
+            .findAll<ChatMessage>({
                 distinct: true,
-            });
+                where: {chatId},
+                include: [{
+                    model: Message,
+                    include: [User],
+                }],
+            })
+            .then((chatMessages) => chatMessages.map((message) => message.toDTO()));
     }
 
     async create(chatId: number, text: string, senderId: number, transaction?: Transaction): Promise<Message> {

@@ -1,10 +1,13 @@
-import { Body, Controller, Get, HttpStatus, InternalServerErrorException, NotFoundException, Param, Post, Res } from "@nestjs/common";
+import { Body, Controller, Get, HttpStatus, InternalServerErrorException, NotFoundException, Param, Post, Query, Res } from "@nestjs/common";
 
 import { ServerController } from "../../classes/server-controller";
-import { Message } from "../message/message.entity";
 import { MessagesService } from "../message/message.service";
 import { Chat } from "./chat.entity";
 import { ChatService } from "./chat.service";
+import { Pagination } from "../../types/pagination.type";
+import { PaginationDto } from "../../dto/pagination.dto";
+import { MessageDto } from "../../dto/message.dto";
+import { MessageListDto } from "../../dto/message-list.dto";
 
 @Controller("chats")
 export class ChatController extends ServerController {
@@ -56,17 +59,17 @@ export class ChatController extends ServerController {
     }
 
     @Get(":id/messages")
-    async getMessagesByChatId(@Res() res, @Param("id") id) {
+    async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination) {
         return this.chatService.getOne(id)
             .then((result: Chat) => {
                 if (!result) {
                     throw new NotFoundException("Chat not found");
                 }
-                return this.messagesService.findByChatId(result.id);
+                return this.messagesService.findByChatId(result.id, new PaginationDto(query));
             })
-            .then((result: Message[]) => {
+            .then((result: MessageListDto) => {
                 res.status(HttpStatus.OK);
-                ChatController.success(res, result);
+                ChatController.success(res, result.data, result.pagination);
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);

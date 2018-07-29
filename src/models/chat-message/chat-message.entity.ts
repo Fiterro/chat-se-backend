@@ -1,9 +1,14 @@
-import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Table, UpdatedAt } from "sequelize-typescript";
+import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, UpdatedAt } from "sequelize-typescript";
 
 import {Chat} from "../chat/chat.entity";
 import {Message} from "../message/message.entity";
 import { MessageDto } from "../../dto/message.dto";
 
+@Scopes({
+    limits(limit: number, offset: number) {
+        return {limit, offset};
+    },
+})
 @Table({
     tableName: "chats_messages",
     timestamps: true,

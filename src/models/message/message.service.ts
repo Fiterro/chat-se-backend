@@ -1,11 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Transaction } from "sequelize";
+import { Transaction, literal } from "sequelize";
 
 import { SEQUELIZE_REPOS } from "../../app.constants";
 import { ChatMessage } from "../chat-message/chat-message.entity";
 import { Message } from "./message.entity";
-import {User} from "../user/user.entity";
-import { MessageDto } from "../../dto/message.dto";
+import { User } from "../user/user.entity";
+import { PaginationDto } from "../../dto/pagination.dto";
+import { MessageListDto } from "../../dto/message-list.dto";
 
 @Injectable()
 export class MessagesService {
@@ -13,18 +14,22 @@ export class MessagesService {
                 @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage) {
     }
 
-    async findByChatId(chatId: number): Promise<MessageDto[]> {
-        // TODO: pg db rework of message storing
+    async findByChatId(chatId: number, pagination: PaginationDto): Promise<MessageListDto> {
+        // TODO: order output by Message.sentAt
         return await this.ChatMessagesRepository
-            .findAll<ChatMessage>({
+            .scope(Message.paginationScope(pagination))
+            .findAndCountAll<ChatMessage>({
                 distinct: true,
                 where: {chatId},
                 include: [{
                     model: Message,
                     include: [User],
                 }],
+                // order: [literal("`Message.sent_at` ASC")],
             })
-            .then((chatMessages) => chatMessages.map((message) => message.toDTO()));
+            .then(({count, rows}) => {
+                return new MessageListDto(rows.map((message) => message.toDTO()), count);
+            });
     }
 
     async create(chatId: number, text: string, senderId: number, transaction?: Transaction): Promise<Message> {

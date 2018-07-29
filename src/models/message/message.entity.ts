@@ -1,6 +1,8 @@
 import {BelongsTo, Column, CreatedAt, Default, DefaultScope, ForeignKey, Model, Table, UpdatedAt} from "sequelize-typescript";
 
 import {User} from "../user/user.entity";
+import { PaginationDto } from "../../dto/pagination.dto";
+import { ScopeOptions } from "sequelize";
 
 @Table({
     tableName: "messages",
@@ -34,4 +36,8 @@ export class Message extends Model<Message> {
 
     @UpdatedAt
     updatedAt: Date;
+
+    static paginationScope(pagination: PaginationDto): ScopeOptions {
+        return { method: ["limits", pagination.limit, pagination.offset] };
+    }
 }

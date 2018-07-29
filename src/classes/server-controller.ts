@@ -6,11 +6,15 @@ import { ApiResponse } from "../interfaces/api-response";
  * Base controller class
  */
 export class ServerController {
-    public static success(res: Response, data: any) {
+    public static success(res: Response, data: any, meta?: any) {
         const response: ApiResponse = {
             status: 200,
             data,
         };
+
+        if (meta) {
+            response.pagination = meta;
+        }
 
         return res.send(response);
     }

@@ -41,7 +41,7 @@ export class AuthService {
                                 email: userInfo.data.emails[0].value,
                                 firstName: userInfo.data.name.givenName,
                                 lastName: userInfo.data.name.familyName,
-                                avatar: userInfo.data.image.url,
+                                avatar: userInfo.data.image.url.split(/[?#]/)[0],
                                 googleId: userInfo.data.id,
                                 refreshToken: response.tokens.refresh_token,
                             } as User;

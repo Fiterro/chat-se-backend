@@ -5,6 +5,8 @@ import { ChatMessage } from "../chat-message/chat-message.entity";
 @Table({
     tableName: "chats",
     timestamps: true,
+    underscored: true,
+    underscoredAll: true,
     createdAt: "created_at",
     updatedAt: "updated_at",
 })

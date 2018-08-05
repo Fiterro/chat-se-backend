@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { Transaction, literal } from "sequelize";
+import { literal, Transaction } from "sequelize";
 
 import { SEQUELIZE_REPOS } from "../../app.constants";
 import { ChatMessage } from "../chat-message/chat-message.entity";
@@ -25,7 +25,7 @@ export class MessagesService {
                     model: Message,
                     include: [User],
                 }],
-                // order: [literal("`Message.sent_at` ASC")],
+                order: [literal(`"message"."sent_at" DESC`)],
             })
             .then(({count, rows}) => {
                 return new MessageListDto(rows.map((message) => message.toDTO()), count);

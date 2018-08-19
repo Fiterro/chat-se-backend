@@ -1,4 +1,16 @@
-import { Body, Controller, Get, HttpStatus, InternalServerErrorException, NotFoundException, Param, Post, Query, Res } from "@nestjs/common";
+import {
+    Body,
+    Controller,
+    Get, HttpCode,
+    HttpStatus,
+    InternalServerErrorException,
+    NotFoundException,
+    Param,
+    Post,
+    Query,
+    Res,
+    UsePipes,
+} from "@nestjs/common";
 
 import { ServerController } from "../../classes/server-controller";
 import { MessagesService } from "../message/message.service";
@@ -6,8 +18,11 @@ import { Chat } from "./chat.entity";
 import { ChatService } from "./chat.service";
 import { Pagination } from "../../types/pagination.type";
 import { PaginationDto } from "../../dto/pagination.dto";
-import { MessageDto } from "../../dto/message.dto";
 import { MessageListDto } from "../../dto/message-list.dto";
+import { ChatMessageSchema } from "../../schemas/chat-message.schema";
+import { ChatMessageDto } from "../../dto/chat-message.dto";
+import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
+import { ChatSchema } from "../../schemas/chat.schema";
 
 @Controller("chats")
 export class ChatController extends ServerController {
@@ -30,10 +45,11 @@ export class ChatController extends ServerController {
     }
 
     @Post()
+    @UsePipes(new JoiValidationPipe(ChatSchema))
+    @HttpCode(HttpStatus.CREATED)
     async createChat(@Body() body, @Res() res) {
         return this.chatService.create(body.name)
             .then((result) => {
-                res.status(HttpStatus.CREATED);
                 ChatController.success(res, result);
             })
             .catch((error) => {
@@ -78,7 +94,8 @@ export class ChatController extends ServerController {
     }
 
     @Post("messages")
-    async sendMessage(@Res() res, @Body() body) {
+    @UsePipes(new JoiValidationPipe(ChatMessageSchema))
+    async sendMessage(@Body() body: ChatMessageDto, @Res() res) {
         return this.messagesService.create(body.chatId, body.text, body.senderId)
             .then((result) => {
                 if (!result) {

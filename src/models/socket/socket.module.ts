@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
+
 import { DatabaseModule } from "../../utils/database/database.module";
 import { ChatModule } from "../chat/chat.module";
 import { EventsGateway } from "./events.gateway";
+import { SocketService } from "./socket.service";
 
 @Module({
     imports: [
@@ -10,6 +12,10 @@ import { EventsGateway } from "./events.gateway";
     ],
     components: [
         EventsGateway,
+        SocketService,
+    ],
+    exports: [
+        SocketService,
     ],
 })
 export class SocketModule {

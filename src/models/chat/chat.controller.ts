@@ -23,6 +23,7 @@ import { ChatMessageSchema } from "../../schemas/chat-message.schema";
 import { ChatMessageDto } from "../../dto/chat-message.dto";
 import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
 import { ChatSchema } from "../../schemas/chat.schema";
+import { ActivityItemDto } from "../../dto/activity-item.dto";
 
 @Controller("chats")
 export class ChatController extends ServerController {
@@ -75,6 +76,7 @@ export class ChatController extends ServerController {
     }
 
     @Get(":id/messages")
+    @HttpCode(HttpStatus.OK)
     async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination) {
         return this.chatService.getOne(id)
             .then((result: Chat) => {
@@ -84,7 +86,6 @@ export class ChatController extends ServerController {
                 return this.messagesService.findByChatId(result.id, new PaginationDto(query));
             })
             .then((result: MessageListDto) => {
-                res.status(HttpStatus.OK);
                 ChatController.success(res, result.data, result.pagination);
             })
             .catch((error) => {
@@ -93,7 +94,27 @@ export class ChatController extends ServerController {
             });
     }
 
+    @Get(":id/activity")
+    @HttpCode(HttpStatus.OK)
+    async getActivityByChatId(@Res() res, @Param("id") id, @Query() query: Pagination) {
+        return this.chatService.getOne(id)
+            .then((result: Chat) => {
+                if (!result) {
+                    throw new NotFoundException("Chat not found");
+                }
+                return this.messagesService.findActivities(result.id);
+            })
+            .then((result: ActivityItemDto[]) => {
+                ChatController.success(res, result);
+            })
+            .catch((error) => {
+                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                return ChatController.failure(res, error);
+            });
+    }
+
     @Post("messages")
+    @HttpCode(HttpStatus.OK)
     @UsePipes(new JoiValidationPipe(ChatMessageSchema))
     async sendMessage(@Body() body: ChatMessageDto, @Res() res) {
         return this.messagesService.create(body.chatId, body.text, body.senderId)
@@ -101,7 +122,6 @@ export class ChatController extends ServerController {
                 if (!result) {
                     throw new InternalServerErrorException("Message not created");
                 }
-                res.status(HttpStatus.OK);
                 ChatController.success(res, result);
             })
             .catch((error) => {

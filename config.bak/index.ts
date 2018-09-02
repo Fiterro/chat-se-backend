@@ -14,7 +14,7 @@ export const config = {
     },
     redis: {
         prefix: "se_dev",
-        host: "172.18.0.3",
+        host: "127.0.0.1",
         port: 6379,
     },
     googleAuth: {

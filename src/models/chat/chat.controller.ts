@@ -24,11 +24,13 @@ import { ChatMessageDto } from "../../dto/chat-message.dto";
 import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
 import { ChatSchema } from "../../schemas/chat.schema";
 import { ActivityItemDto } from "../../dto/activity-item.dto";
+import { SocketService } from "../socket/socket.service";
 
 @Controller("chats")
 export class ChatController extends ServerController {
     constructor(private readonly chatService: ChatService,
-                private readonly messagesService: MessagesService) {
+                private readonly messagesService: MessagesService,
+                private readonly socketService: SocketService) {
         super();
     }
 
@@ -122,6 +124,8 @@ export class ChatController extends ServerController {
                 if (!result) {
                     throw new InternalServerErrorException("Message not created");
                 }
+                // TODO: emit socket event
+                // this.socketService.emitEvent("message", result);
                 ChatController.success(res, result);
             })
             .catch((error) => {

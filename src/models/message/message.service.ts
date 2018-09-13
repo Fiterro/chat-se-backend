@@ -9,6 +9,7 @@ import { PaginationDto } from "../../dto/pagination.dto";
 import { MessageListDto } from "../../dto/message-list.dto";
 import { ActivityItemDto } from "../../dto/activity-item.dto";
 import { ParticipantShort } from "../../types/participant-short.type";
+import { MessageDto } from "../../dto/message.dto";
 
 @Injectable()
 export class MessagesService {
@@ -33,10 +34,22 @@ export class MessagesService {
             });
     }
 
-    async create(chatId: number, text: string, senderId: number, transaction?: Transaction): Promise<Message> {
+    async findOne(messageId: number): Promise<MessageDto> {
+        return await this.ChatMessagesRepository
+            .findById(messageId, {
+                include: [{
+                    model: Message,
+                    include: [User],
+                }],
+            })
+            .then((message: ChatMessage) => {
+                return message.toDTO();
+            });
+    }
+
+    async create(chatId: number, text: string, senderId: number, transaction?: Transaction): Promise<ChatMessage> {
         const message = await this.MessageRepository.create({senderId, text}, {transaction});
-        await this.ChatMessagesRepository.create({chatId, messageId: message.id}, {transaction});
-        return message;
+        return await this.ChatMessagesRepository.create({chatId, messageId: message.id}, {transaction});
     }
 
     async findActivities(chatId: number): Promise<ActivityItemDto[]> {

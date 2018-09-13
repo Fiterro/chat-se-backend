@@ -1,25 +1,32 @@
-import { WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
+import { SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server } from "socket.io";
-
-import { SocketService } from "./socket.service";
-import { filter } from "rxjs/operators";
+import { MessagesService } from "../message/message.service";
+import { ChatMessageDto } from "../../dto/chat-message.dto";
+import { InternalServerErrorException, Logger, UsePipes } from "@nestjs/common";
+import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
+import { ChatMessageSchema } from "../../schemas/chat-message.schema";
+import { ChatMessage } from "../chat-message/chat-message.entity";
 
 @WebSocketGateway()
 export class EventsGateway {
     @WebSocketServer() server: Server;
 
-    constructor(private readonly socketService: SocketService) {
-        this.createEventSubscription();
+    constructor(private readonly messagesService: MessagesService) {
     }
 
-    createEventSubscription(): void {
-        this.socketService.eventEmitter
-            .pipe(
-                filter((data) => !!data),
-            )
-            .subscribe(([event, payload]) => {
-                // TODO: solve problem: this.server = null;
-                this.server.emit(event, payload);
-            });
+    @SubscribeMessage("createMessage")
+    @UsePipes(new JoiValidationPipe(ChatMessageSchema))
+    onCreateMessageEvent(client, data: ChatMessageDto): Promise<void> {
+        return this.messagesService.create(data.chatId, data.text, data.senderId)
+            .then((result: ChatMessage) => {
+                if (!result) {
+                    throw new InternalServerErrorException("Message not created");
+                }
+                return this.messagesService.findOne(result.messageId);
+            })
+            .then((result) => {
+                this.server.emit("message", result)
+            })
+            .catch((error) => Logger.error(error));
     }
 }

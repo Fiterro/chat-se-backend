@@ -62,13 +62,13 @@ export class ChatController extends ServerController {
     }
 
     @Get(":id")
+    @HttpCode(HttpStatus.OK)
     async findOne(@Res() res, @Param("id") id) {
         return this.chatService.getOne(id)
             .then((result) => {
                 if (!result) {
                     throw new NotFoundException("Chat not found");
                 }
-                res.status(HttpStatus.OK);
                 ChatController.success(res, result);
             })
             .catch((error) => {

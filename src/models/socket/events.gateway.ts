@@ -6,6 +6,7 @@ import { InternalServerErrorException, Logger, UsePipes } from "@nestjs/common";
 import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
 import { ChatMessageSchema } from "../../schemas/chat-message.schema";
 import { ChatMessage } from "../chat-message/chat-message.entity";
+import { MessageDto } from "../../dto/message.dto";
 
 @WebSocketGateway()
 export class EventsGateway {
@@ -24,8 +25,8 @@ export class EventsGateway {
                 }
                 return this.messagesService.findOne(result.messageId);
             })
-            .then((result) => {
-                this.server.emit("message", result)
+            .then((result: MessageDto) => {
+                this.server.emit("message", result);
             })
             .catch((error) => Logger.error(error));
     }

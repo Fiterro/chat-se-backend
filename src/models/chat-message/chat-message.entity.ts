@@ -47,6 +47,7 @@ export class ChatMessage extends Model<ChatMessage> {
     toDTO(): MessageDto {
         return new MessageDto(
             this.message.id,
+            this.chatId,
             this.message.text,
             this.message.sentAt,
             this.message.sender,

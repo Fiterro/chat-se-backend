@@ -24,13 +24,11 @@ import { ChatMessageDto } from "../../dto/chat-message.dto";
 import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
 import { ChatSchema } from "../../schemas/chat.schema";
 import { ActivityItemDto } from "../../dto/activity-item.dto";
-import { SocketService } from "../socket/socket.service";
 
 @Controller("chats")
 export class ChatController extends ServerController {
     constructor(private readonly chatService: ChatService,
-                private readonly messagesService: MessagesService,
-                private readonly socketService: SocketService) {
+                private readonly messagesService: MessagesService) {
         super();
     }
 
@@ -119,13 +117,11 @@ export class ChatController extends ServerController {
     @HttpCode(HttpStatus.OK)
     @UsePipes(new JoiValidationPipe(ChatMessageSchema))
     async sendMessage(@Body() body: ChatMessageDto, @Res() res) {
-        return this.messagesService.create(body.chatId, body.text, body.senderId)
+        return this.messagesService.create(body.chatId, body.text, body.senderId, body.uuid)
             .then((result) => {
                 if (!result) {
                     throw new InternalServerErrorException("Message not created");
                 }
-                // TODO: emit socket event
-                // this.socketService.emitEvent("message", result);
                 ChatController.success(res, result);
             })
             .catch((error) => {

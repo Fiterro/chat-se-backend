@@ -5,7 +5,7 @@ export const config = {
         port: 8001,
     },
     db: {
-        host: "172.18.0.3",
+        host: "172.18.0.2",
         database: "se_db",
         port: 5432,
         user: "postgres",
@@ -14,7 +14,7 @@ export const config = {
     },
     redis: {
         prefix: "se_dev",
-        host: "172.18.0.2",
+        host: "172.18.0.3",
         port: 6379,
     },
     googleAuth: {

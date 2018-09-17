@@ -18,7 +18,7 @@ export class EventsGateway {
     @SubscribeMessage("createMessage")
     @UsePipes(new JoiValidationPipe(ChatMessageSchema))
     onCreateMessageEvent(client, data: ChatMessageDto): Promise<void> {
-        return this.messagesService.create(data.chatId, data.text, data.senderId)
+        return this.messagesService.create(data.chatId, data.text, data.senderId, data.uuid)
             .then((result: ChatMessage) => {
                 if (!result) {
                     throw new InternalServerErrorException("Message not created");

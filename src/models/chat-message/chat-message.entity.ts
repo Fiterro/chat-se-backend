@@ -49,6 +49,7 @@ export class ChatMessage extends Model<ChatMessage> {
             this.message.id,
             this.chatId,
             this.message.text,
+            this.message.uuid,
             this.message.sentAt,
             this.message.sender,
             this.isRead,

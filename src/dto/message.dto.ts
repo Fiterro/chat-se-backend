@@ -4,6 +4,7 @@ export class MessageDto {
     readonly id: number;
     readonly chatId: number;
     readonly text: string;
+    readonly uuid: string;
     readonly sentAt: Date;
     readonly sender: User;
     readonly isRead: boolean;
@@ -14,6 +15,7 @@ export class MessageDto {
     constructor(id: number,
                 chatId: number,
                 text: string,
+                uuid: string,
                 sentAt: Date,
                 sender: User,
                 isRead: boolean,
@@ -23,6 +25,7 @@ export class MessageDto {
         this.id = id;
         this.chatId = chatId;
         this.text = text;
+        this.uuid = uuid;
         this.sentAt = sentAt;
         this.sender = sender;
         this.isRead = isRead;

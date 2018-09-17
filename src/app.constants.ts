@@ -7,6 +7,7 @@ export const SEQUELIZE_REPOS = {
     CHATS: "ChatsRepository",
     MESSAGES: "MessagesRepository",
     CHAT_MESSAGES: "ChatMessagesRepository",
+    MESSAGE_READ: "MessageReadRepository",
 };
 
 export const JWT_SECRET_KEY = "some_secret_code_here";

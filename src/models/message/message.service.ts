@@ -47,8 +47,8 @@ export class MessagesService {
             });
     }
 
-    async create(chatId: number, text: string, senderId: number, transaction?: Transaction): Promise<ChatMessage> {
-        const message = await this.MessageRepository.create({senderId, text}, {transaction});
+    async create(chatId: number, text: string, senderId: number, uuid: string, transaction?: Transaction): Promise<ChatMessage> {
+        const message = await this.MessageRepository.create({senderId, text, uuid}, {transaction});
         return await this.ChatMessagesRepository.create({chatId, messageId: message.id}, {transaction});
     }
 

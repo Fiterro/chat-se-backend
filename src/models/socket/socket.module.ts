@@ -2,7 +2,6 @@ import { Module } from "@nestjs/common";
 
 import { DatabaseModule } from "../../utils/database/database.module";
 import { EventsGateway } from "./events.gateway";
-import { SocketService } from "./socket.service";
 import { MessageModule } from "../message/message.module";
 
 @Module({
@@ -12,10 +11,6 @@ import { MessageModule } from "../message/message.module";
     ],
     providers: [
         EventsGateway,
-        SocketService,
-    ],
-    exports: [
-        SocketService,
     ],
 })
 export class SocketModule {

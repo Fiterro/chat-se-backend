@@ -28,9 +28,9 @@ export class UserService {
 
     format(user) {
         return {
-            id: user.id,
             email: user.email,
             profile: {
+                id: user.id,
                 username: user.username,
                 firstName: user.firstName,
                 lastName: user.lastName,

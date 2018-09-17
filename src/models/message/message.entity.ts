@@ -1,8 +1,9 @@
-import {BelongsTo, Column, CreatedAt, Default, DefaultScope, ForeignKey, Model, Table, UpdatedAt} from "sequelize-typescript";
-
-import {User} from "../user/user.entity";
-import { PaginationDto } from "../../dto/pagination.dto";
+import { BelongsTo, Column, CreatedAt, Default, ForeignKey, Model, Table, UpdatedAt } from "sequelize-typescript";
 import { ScopeOptions } from "sequelize";
+import { v4 as uuidv4 } from "uuid";
+
+import { User } from "../user/user.entity";
+import { PaginationDto } from "../../dto/pagination.dto";
 
 @Table({
     tableName: "messages",
@@ -28,6 +29,10 @@ export class Message extends Model<Message> {
     @Column({field: "sent_at"})
     sentAt: Date;
 
+    @Default(() => uuidv4())
+    @Column
+    uuid: string;
+
     @BelongsTo(() => User)
     sender: User;
 
@@ -38,6 +43,6 @@ export class Message extends Model<Message> {
     updatedAt: Date;
 
     static paginationScope(pagination: PaginationDto): ScopeOptions {
-        return { method: ["limits", pagination.limit, pagination.offset] };
+        return {method: ["limits", pagination.limit, pagination.offset]};
     }
 }

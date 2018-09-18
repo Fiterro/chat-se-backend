@@ -26,12 +26,6 @@ export class ChatMessage extends Model<ChatMessage> {
     @Column({field: "chat_id"})
     chatId: number;
 
-    @Column({field: "is_read"})
-    isRead: boolean;
-
-    @Column({field: "view_count"})
-    viewCount: number;
-
     @CreatedAt
     createdAt: Date;
 
@@ -44,6 +38,7 @@ export class ChatMessage extends Model<ChatMessage> {
     @BelongsTo(() => Message)
     message: Message;
 
+    viewCount = 0;
     toDTO(): MessageDto {
         return new MessageDto(
             this.message.id,
@@ -52,7 +47,6 @@ export class ChatMessage extends Model<ChatMessage> {
             this.message.uuid,
             this.message.sentAt,
             this.message.sender,
-            this.isRead,
             this.viewCount,
             this.createdAt,
             this.updatedAt,

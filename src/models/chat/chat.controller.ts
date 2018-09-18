@@ -1,7 +1,8 @@
 import {
     Body,
     Controller,
-    Get, HttpCode,
+    Get,
+    HttpCode,
     HttpStatus,
     InternalServerErrorException,
     NotFoundException,
@@ -86,6 +87,7 @@ export class ChatController extends ServerController {
                 return this.messagesService.findByChatId(result.id, new PaginationDto(query));
             })
             .then((result: MessageListDto) => {
+                // TODO: get data by messageId in message_read: group by messageId and count
                 ChatController.success(res, result.data, result.pagination);
             })
             .catch((error) => {
@@ -104,6 +106,19 @@ export class ChatController extends ServerController {
                 }
                 return this.messagesService.findActivities(result.id);
             })
+            .then((result: ActivityItemDto[]) => {
+                ChatController.success(res, result);
+            })
+            .catch((error) => {
+                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
+                return ChatController.failure(res, error);
+            });
+    }
+
+    @Post("read")
+    @HttpCode(HttpStatus.OK)
+    async readChatMessages(@Body() body, @Res() res) {
+        return this.messagesService.readMessages(body)
             .then((result: ActivityItemDto[]) => {
                 ChatController.success(res, result);
             })

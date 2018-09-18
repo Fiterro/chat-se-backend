@@ -1,5 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { literal, Transaction } from "sequelize";
+import { literal, Op, Transaction } from "sequelize";
 
 import { SEQUELIZE_REPOS } from "../../app.constants";
 import { ChatMessage } from "../chat-message/chat-message.entity";
@@ -10,10 +10,12 @@ import { MessageListDto } from "../../dto/message-list.dto";
 import { ActivityItemDto } from "../../dto/activity-item.dto";
 import { ParticipantShort } from "../../types/participant-short.type";
 import { MessageDto } from "../../dto/message.dto";
+import { MessageRead } from "../message-read/message-read.entity";
 
 @Injectable()
 export class MessagesService {
     constructor(@Inject(SEQUELIZE_REPOS.MESSAGES) private readonly MessageRepository: typeof Message,
+                @Inject(SEQUELIZE_REPOS.MESSAGE_READ) private readonly MessageReadRepository: typeof MessageRead,
                 @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage) {
     }
 
@@ -82,7 +84,40 @@ export class MessagesService {
             });
     }
 
-    obtainParticipant(chatMessages: ChatMessage[]): ParticipantShort[] {
+    async readMessages(messageIds: number[]): Promise<MessageRead[]> {
+        return await this.findReadMessages(messageIds)
+            .then((readMessages) => {
+                const readIds: number[] = readMessages.map((message) => message.messageId);
+                const dataToCreate = messageIds
+                    .reduce((acc, val) => {
+                        // @ts-ignore
+                        if (!readIds.includes(val)) {
+                            acc.push({messageId: val, userId: 1});
+                        }
+                        return acc;
+                    }, []);
+
+                return this.MessageReadRepository
+                    .bulkCreate<MessageRead>(dataToCreate)
+                    .then((result) => {
+                        return result;
+                    });
+            });
+    }
+
+    async findReadMessages(messageIds: number[]): Promise<MessageRead[]> {
+        return await this.MessageReadRepository
+            .findAll<MessageRead>({
+                distinct: true,
+                where: {
+                    messageId: {
+                        [Op.in]: messageIds,
+                    },
+                },
+            });
+    }
+
+    private obtainParticipant(chatMessages: ChatMessage[]): ParticipantShort[] {
         const participants: ParticipantShort[] = [];
         const map = new Map();
         chatMessages.forEach((item) => {

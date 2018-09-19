@@ -16,10 +16,6 @@ export class UserService {
         return await this.UsersRepository.findById<User>(id);
     }
 
-    async addOne(data): Promise<User> {
-        return await this.UsersRepository.create<User>(data);
-    }
-
     async findOrCreate(user: User): Promise<User> {
         return await this.UsersRepository
             .findOrCreate<User>({where: {googleId: user.googleId}, defaults: user})

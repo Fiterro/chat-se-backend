@@ -25,6 +25,7 @@ import { ChatMessageDto } from "../../dto/chat-message.dto";
 import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
 import { ChatSchema } from "../../schemas/chat.schema";
 import { ActivityItemDto } from "../../dto/activity-item.dto";
+import { MessageRead } from "../message-read/message-read.entity";
 
 @Controller("chats")
 export class ChatController extends ServerController {
@@ -119,7 +120,7 @@ export class ChatController extends ServerController {
     @HttpCode(HttpStatus.OK)
     async readChatMessages(@Body() body, @Res() res) {
         return this.messagesService.readMessages(body)
-            .then((result: ActivityItemDto[]) => {
+            .then((result: MessageRead[]) => {
                 ChatController.success(res, result);
             })
             .catch((error) => {

@@ -1,10 +1,9 @@
-import { BelongsTo, Column, CreatedAt, Default, ForeignKey, HasMany, Model, Table, UpdatedAt } from "sequelize-typescript";
+import { BelongsTo, Column, CreatedAt, Default, ForeignKey, Model, Table, UpdatedAt } from "sequelize-typescript";
 import { ScopeOptions } from "sequelize";
 import { v4 as uuidv4 } from "uuid";
 
 import { User } from "../user/user.entity";
 import { PaginationDto } from "../../dto/pagination.dto";
-import { MessageRead } from "../message-read/message-read.entity";
 
 @Table({
     tableName: "messages",
@@ -36,9 +35,6 @@ export class Message extends Model<Message> {
 
     @BelongsTo(() => User)
     sender: User;
-
-    @HasMany(() => MessageRead)
-    messageRead: MessageRead;
 
     @CreatedAt
     createdAt: Date;

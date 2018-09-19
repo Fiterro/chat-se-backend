@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { google } from "googleapis";
-import * as jwt from "jsonwebtoken";
 
 import { config } from "../../../config";
 import { User } from "../user/user.entity";
@@ -26,7 +25,7 @@ export class AuthService {
         );
     }
 
-    async processAuthCode(code: string) {
+    async processAuthCode(code: string): Promise<User> {
         return this.oauth2Client.getToken(code)
             .then(response => {
                 this.oauth2Client.setCredentials(response.tokens);
@@ -52,27 +51,14 @@ export class AuthService {
                     });
                 });
             })
-            .then(user => this.userService.findOrCreate(user))
-            .then(user => AuthService.authentificate(user))
-            .then(user => this.userService.format(user));
+            .then(user => this.userService.findOrCreate(user));
     }
 
-    async signup() {
+    async signup(): Promise<any> {
         return this.oauth2Client.generateAuthUrl({
             access_type: "offline",
             scope: this.scopes,
             prompt: "consent",
         });
-    }
-
-    static async authentificate(user: User) {
-        const data = user;
-        const tokenParams = {
-            createTime: Date.now(),
-            id: user.id,
-        };
-
-        data.token = jwt.sign(tokenParams, config.jwtKey);
-        return data;
     }
 }

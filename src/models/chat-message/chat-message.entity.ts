@@ -39,6 +39,7 @@ export class ChatMessage extends Model<ChatMessage> {
     message: Message;
 
     viewCount = 0;
+
     toDTO(): MessageDto {
         return new MessageDto(
             this.message.id,

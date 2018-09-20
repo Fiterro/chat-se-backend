@@ -105,7 +105,7 @@ export class SessionService implements ISessionService<any> {
 
     async storeSession(session: SessionEntity, options?: SessionOptions): Promise<FullSession> {
         const accessToken = CryptoManager.genToken(session.userId, config.jwtKey);
-        const lifeTime = config.jwtLifeTime;
+        const lifeTime = options ? options.lifeTime : config.jwtLifeTime;
 
         const data: CachedSession = {
             sessionId: session.id,

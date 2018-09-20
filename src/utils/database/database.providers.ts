@@ -7,7 +7,7 @@ import { User } from "../../models/user/user.entity";
 import { Chat } from "../../models/chat/chat.entity";
 import { Message } from "../../models/message/message.entity";
 import { MessageRead } from "../../models/message-read/message-read.entity";
-import { Session } from "../../models/session/session.entity";
+import { SessionEntity } from "../../models/session/session.entity";
 
 export const DatabaseProviders = [
     {
@@ -22,7 +22,7 @@ export const DatabaseProviders = [
                 dialect: config.db.dialect,
                 operatorsAliases: false,
             });
-            sequelize.addModels([User, Chat, Message, ChatMessage, MessageRead, Session]);
+            sequelize.addModels([User, Chat, Message, ChatMessage, MessageRead, SessionEntity]);
             await sequelize.sync();
             return sequelize;
         },

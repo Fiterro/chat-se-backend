@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, Logger } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 
 @Injectable()
@@ -9,10 +9,10 @@ export class AuthGuard implements CanActivate {
     canActivate(context: ExecutionContext): boolean {
         const request = context.switchToHttp().getRequest();
         if (!request.session) {
-            throw new Error("Token has expired");
+            throw new UnauthorizedException("Invalid access token");
         }
 
-        const allowedSessions = this.reflector.get("allowedSessions", context.getHandler());
+        const allowedSessions = this.reflector.get<Function[]>("allowedSessions", context.getHandler());
         Logger.warn(allowedSessions);
         if (allowedSessions && allowedSessions.length) {
             return allowedSessions

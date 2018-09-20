@@ -15,7 +15,7 @@ export class UserController extends ServerController {
             .then((result) => {
                 res.status(HttpStatus.OK);
                 UserController.success(res, result
-                    .map(user => this.userService.format(user)));
+                    .map(user => user.toDTO()));
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -37,24 +37,11 @@ export class UserController extends ServerController {
                     return UserController.failure(res, new Error("User not found"));
                 }
                 res.status(HttpStatus.OK);
-                return UserController.success(res, this.userService.format(result));
+                return UserController.success(res, result.toDTO());
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 return UserController.failure(res, error);
             });
     }
-
-    /*@Post()
-    async create(@Body() createUser, @Res() res) {
-        return this.userService.addOne(createUser)
-            .then((result) => {
-                res.status(HttpStatus.CREATED);
-                return UserController.success(res, this.userService.format(result));
-            })
-            .catch((error) => {
-                res.status(HttpStatus.FORBIDDEN);
-                return UserController.failure(res, error);
-            });
-    }*/
 }

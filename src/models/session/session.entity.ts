@@ -8,7 +8,7 @@ import { User } from "../user/user.entity";
     createdAt: "created_at",
     updatedAt: "updated_at",
 })
-export class Session extends Model<Session> {
+export class SessionEntity extends Model<SessionEntity> {
     @ForeignKey(() => User)
     @Column({field: "user_id"})
     userId: number;

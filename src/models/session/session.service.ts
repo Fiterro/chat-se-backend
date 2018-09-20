@@ -3,14 +3,16 @@ import { Sequelize, Transaction } from "sequelize";
 import { RedisClient } from "redis";
 import { Observable, Subject } from "rxjs";
 
+import {config} from "../../../config";
 import { ISessionService } from "../../interfaces/session-service.interface";
 import { REDIS_REPOS, REDIS_TOKEN, SEQUELIZE_TOKEN } from "../../app.constants";
-import { Session } from "./session.entity";
+import { SessionEntity } from "./session.entity";
 import { IRedisWrapper } from "../../interfaces/redis-wrapper.interface";
 import { RedisWrapper } from "../../classes/redis-wrapper";
 import { StringComposer } from "../../utils/string-composer";
 import { CryptoManager } from "../../utils/crypto-manager";
 import { SessionDto } from "../../dto/session.dto";
+import { UserSessionDto } from "../../dto/user-session.dto";
 
 // TODO: probably move interfaces into proper folder
 interface SessionTokens {
@@ -35,7 +37,7 @@ export class SessionService implements ISessionService<any> {
     private readonly destroyedSessionsEmitter = new Subject<number[]>();
 
     constructor(@Inject(REDIS_TOKEN) private readonly redis: RedisClient,
-                @Inject(REDIS_REPOS.SESSION) private readonly sessions: typeof Session,
+                @Inject(REDIS_REPOS.SESSION) private readonly sessions: typeof SessionEntity,
                 @Inject(SEQUELIZE_TOKEN) private readonly dbConnection: Sequelize) {
         this.redisClient = new RedisWrapper(redis);
     }
@@ -101,9 +103,9 @@ export class SessionService implements ISessionService<any> {
         }
     }
 
-    async storeSession(session: Session, options?: SessionOptions): Promise<FullSession> {
-        const accessToken = CryptoManager.genToken(session.userId, "accessToken");
-        const lifeTime = 604800;
+    async storeSession(session: SessionEntity, options?: SessionOptions): Promise<FullSession> {
+        const accessToken = CryptoManager.genToken(session.userId, config.jwtKey);
+        const lifeTime = config.jwtLifeTime;
 
         const data: CachedSession = {
             sessionId: session.id,
@@ -122,14 +124,14 @@ export class SessionService implements ISessionService<any> {
         };
     }
 
-    async findSession(accessToken: string): Promise<any | null> {
+    async findSession(accessToken: string): Promise<UserSessionDto | null> {
         const cachedSession = JSON.parse(await this.redisClient.get(accessToken)) as CachedSession;
 
         if (!cachedSession) {
             return null;
         }
 
-        return {userId: cachedSession.userId, sessionId: cachedSession.sessionId} as any;
+        return new UserSessionDto(cachedSession.userId, cachedSession.sessionId);
     }
 
     async destroy(sessionId: number): Promise<void> {
@@ -150,8 +152,8 @@ export class SessionService implements ISessionService<any> {
         }
     }
 
-    async refresh(session: Session): Promise<any> {
+    async refresh(session: SessionEntity): Promise<SessionDto> {
         const fullSession = await this.storeSession(session);
-        return {accessToken: fullSession.accessToken, refreshToken: fullSession.refreshToken, lifeTime: fullSession.lifeTime};
+        return new SessionDto(fullSession.accessToken, fullSession.refreshToken, fullSession.lifeTime);
     }
 }

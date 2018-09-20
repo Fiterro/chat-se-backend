@@ -10,6 +10,7 @@ import {
     Post,
     Query,
     Res,
+    UseGuards,
     UsePipes,
 } from "@nestjs/common";
 
@@ -26,8 +27,13 @@ import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
 import { ChatSchema } from "../../schemas/chat.schema";
 import { ActivityItemDto } from "../../dto/activity-item.dto";
 import { MessageRead } from "../message-read/message-read.entity";
+import { AllowSessions } from "../../guards/allow-session";
+import { UserSessionDto } from "../../dto/user-session.dto";
+import { AuthGuard } from "../../guards/auth.guard";
 
 @Controller("chats")
+@AllowSessions(UserSessionDto)
+@UseGuards(AuthGuard)
 export class ChatController extends ServerController {
     constructor(private readonly chatService: ChatService,
                 private readonly messagesService: MessagesService) {
@@ -35,7 +41,7 @@ export class ChatController extends ServerController {
     }
 
     @Get()
-    async findAll(@Res() res) {
+    async findAll(@Res() res): Promise<void> {
         return this.chatService.findAll()
             .then((result) => {
                 res.status(HttpStatus.OK);
@@ -43,27 +49,27 @@ export class ChatController extends ServerController {
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                return ChatController.failure(res, error);
+                ChatController.failure(res, error);
             });
     }
 
     @Post()
     @UsePipes(new JoiValidationPipe(ChatSchema))
     @HttpCode(HttpStatus.CREATED)
-    async createChat(@Body() body, @Res() res) {
+    async createChat(@Body() body, @Res() res): Promise<void> {
         return this.chatService.create(body.name)
             .then((result) => {
                 ChatController.success(res, result);
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                return ChatController.failure(res, error);
+                ChatController.failure(res, error);
             });
     }
 
     @Get(":id")
     @HttpCode(HttpStatus.OK)
-    async findOne(@Res() res, @Param("id") id) {
+    async findOne(@Res() res, @Param("id") id): Promise<void> {
         return this.chatService.getOne(id)
             .then((result) => {
                 if (!result) {
@@ -73,13 +79,13 @@ export class ChatController extends ServerController {
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                return ChatController.failure(res, error);
+                ChatController.failure(res, error);
             });
     }
 
     @Get(":id/messages")
     @HttpCode(HttpStatus.OK)
-    async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination) {
+    async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination): Promise<void> {
         return this.chatService.getOne(id)
             .then((result: Chat) => {
                 if (!result) {
@@ -93,13 +99,13 @@ export class ChatController extends ServerController {
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                return ChatController.failure(res, error);
+                ChatController.failure(res, error);
             });
     }
 
     @Get(":id/activity")
     @HttpCode(HttpStatus.OK)
-    async getActivityByChatId(@Res() res, @Param("id") id, @Query() query: Pagination) {
+    async getActivityByChatId(@Res() res, @Param("id") id, @Query() query: Pagination): Promise<void> {
         return this.chatService.getOne(id)
             .then((result: Chat) => {
                 if (!result) {
@@ -112,27 +118,27 @@ export class ChatController extends ServerController {
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                return ChatController.failure(res, error);
+                ChatController.failure(res, error);
             });
     }
 
     @Post("read")
     @HttpCode(HttpStatus.OK)
-    async readChatMessages(@Body() body, @Res() res) {
+    async readChatMessages(@Body() body, @Res() res): Promise<void> {
         return this.messagesService.readMessages(body)
             .then((result: MessageRead[]) => {
                 ChatController.success(res, result);
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                return ChatController.failure(res, error);
+                ChatController.failure(res, error);
             });
     }
 
     @Post("messages")
     @HttpCode(HttpStatus.OK)
     @UsePipes(new JoiValidationPipe(ChatMessageSchema))
-    async sendMessage(@Body() body: ChatMessageDto, @Res() res) {
+    async sendMessage(@Body() body: ChatMessageDto, @Res() res): Promise<void> {
         return this.messagesService.create(body.chatId, body.text, body.senderId, body.uuid)
             .then((result) => {
                 if (!result) {
@@ -142,7 +148,7 @@ export class ChatController extends ServerController {
             })
             .catch((error) => {
                 res.status(HttpStatus.INTERNAL_SERVER_ERROR);
-                return ChatController.failure(res, error);
+                ChatController.failure(res, error);
             });
     }
 }

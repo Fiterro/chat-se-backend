@@ -1,5 +1,6 @@
-import { Column, CreatedAt, Model, Table, UpdatedAt } from "sequelize-typescript";
+import { Column, CreatedAt, HasMany, Model, Table, UpdatedAt } from "sequelize-typescript";
 import { UserDto } from "../../dto/user.dto";
+import { MessageRead } from "../message-read/message-read.entity";
 
 @Table({
     tableName: "users",
@@ -44,6 +45,9 @@ export class User extends Model<User> {
         field: "refresh_token",
     })
     refreshToken: string;
+
+    @HasMany(() => MessageRead)
+    views: MessageRead[];
 
     @CreatedAt
     createdAt: Date;

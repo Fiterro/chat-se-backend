@@ -12,6 +12,11 @@ import { ParticipantShort } from "../../types/participant-short.type";
 import { MessageDto } from "../../dto/message.dto";
 import { MessageRead } from "../message-read/message-read.entity";
 
+interface MessagesAndCount {
+    rows: ChatMessage[];
+    count: number;
+}
+
 @Injectable()
 export class MessagesService {
     constructor(@Inject(SEQUELIZE_REPOS.MESSAGES) private readonly MessageRepository: typeof Message,
@@ -20,20 +25,15 @@ export class MessagesService {
     }
 
     async findByChatId(chatId: number, pagination: PaginationDto): Promise<MessageListDto> {
-        return await this.ChatMessagesRepository
-            .scope(Message.paginationScope(pagination))
-            .findAndCountAll<ChatMessage>({
-                distinct: true,
-                where: {chatId},
-                include: [{
-                    model: Message,
-                    include: [User],
-                }],
-                order: [literal(`"message"."sent_at" DESC`)],
-            })
-            .then(({count, rows}) => {
-                return new MessageListDto(rows.map((message) => message.toDTO()), count);
-            });
+        const messagesList: MessagesAndCount = await this.getMessagesList(chatId, pagination);
+        const messageIds: number[] = messagesList.rows.map(message => message.id);
+        const numberOfViews: MessageRead[] = await this.countViews(messageIds);
+        const messagesDto = messagesList.rows.map((message) => {
+            const index = numberOfViews.findIndex((value) => value.messageId === message.id);
+            return index >= 0 ? message.toDTO(Number(numberOfViews[index].dataValues.countViews)) : message.toDTO();
+        });
+
+        return new MessageListDto(messagesDto, messagesList.count);
     }
 
     async findOne(messageId: number): Promise<MessageDto> {
@@ -84,15 +84,15 @@ export class MessagesService {
             });
     }
 
-    async readMessages(messageIds: number[]): Promise<MessageRead[]> {
-        return await this.findReadMessages(messageIds)
+    async readMessages(messageIds: number[], userId: number): Promise<MessageRead[]> {
+        return await this.findReadMessages(messageIds, userId)
             .then((readMessages) => {
                 const readIds: number[] = readMessages.map((message) => message.messageId);
                 const dataToCreate = messageIds
                     .reduce((acc, val) => {
                         // @ts-ignore
                         if (!readIds.includes(val)) {
-                            acc.push({messageId: val, userId: 1});
+                            acc.push({messageId: val, userId});
                         }
                         return acc;
                     }, []);
@@ -105,15 +105,45 @@ export class MessagesService {
             });
     }
 
-    async findReadMessages(messageIds: number[]): Promise<MessageRead[]> {
+    async findReadMessages(messageIds: number[], userId: number): Promise<MessageRead[]> {
         return await this.MessageReadRepository
             .findAll<MessageRead>({
                 distinct: true,
                 where: {
+                    userId,
                     messageId: {
                         [Op.in]: messageIds,
                     },
                 },
+            });
+    }
+
+    private async countViews(messagesIds: number[]): Promise<MessageRead[]> {
+        const seq = this.MessageReadRepository.sequelize;
+        return this.MessageReadRepository
+            .findAll({
+                where: {
+                    messageId: {
+                        [Op.in]: messagesIds,
+                    },
+                },
+                attributes: ["messageId", [seq.fn("COUNT", seq.col("user_id")), "countViews"]],
+                order: ["messageId"],
+                group: ["messageId"],
+            });
+    }
+
+    private async getMessagesList(chatId: number, pagination: PaginationDto): Promise<MessagesAndCount> {
+        return await this.ChatMessagesRepository
+            .scope(Message.paginationScope(pagination))
+            .findAndCountAll<ChatMessage>({
+                distinct: true,
+                where: {chatId},
+                include: [{
+                    model: Message,
+                    include: [User],
+                }],
+                order: [literal(`"message"."sent_at" DESC`)],
             });
     }
 

@@ -1,4 +1,4 @@
-import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 
 @Injectable()
@@ -13,7 +13,6 @@ export class AuthGuard implements CanActivate {
         }
 
         const allowedSessions = this.reflector.get<Function[]>("allowedSessions", context.getHandler());
-        Logger.warn(allowedSessions);
         if (allowedSessions && allowedSessions.length) {
             return allowedSessions
                 .reduce((result: boolean, Session): boolean => result || request.session instanceof Session, false);

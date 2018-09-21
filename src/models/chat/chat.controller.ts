@@ -10,6 +10,7 @@ import {
     Post,
     Query,
     Res,
+    Session,
     UseGuards,
     UsePipes,
 } from "@nestjs/common";
@@ -124,8 +125,8 @@ export class ChatController extends ServerController {
 
     @Post("read")
     @HttpCode(HttpStatus.OK)
-    async readChatMessages(@Body() body, @Res() res): Promise<void> {
-        return this.messagesService.readMessages(body)
+    async readChatMessages(@Body() body, @Session() session: UserSessionDto, @Res() res): Promise<void> {
+        return this.messagesService.readMessages(body, session.userId)
             .then((result: MessageRead[]) => {
                 ChatController.success(res, result);
             })

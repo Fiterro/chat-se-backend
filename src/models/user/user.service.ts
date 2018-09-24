@@ -21,19 +21,4 @@ export class UserService {
             .findOrCreate<User>({where: {googleId: user.googleId}, defaults: user})
             .then((data: [User, boolean]) => data[0]);
     }
-
-    format(user) {
-        return {
-            email: user.email,
-            profile: {
-                id: user.id,
-                username: user.username,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                avatar: user.avatar,
-                googleId: user.googleId,
-            },
-            token: user.token,
-        };
-    }
 }

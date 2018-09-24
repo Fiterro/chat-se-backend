@@ -5,11 +5,13 @@ import { MessageModule } from "../message/message.module";
 import { ChatController } from "./chat.controller";
 import { ChatProviders } from "./chat.providers";
 import { ChatService } from "./chat.service";
+import { UserModule } from "../user/user.module";
 
 @Module({
     imports: [
         DatabaseModule,
         MessageModule,
+        UserModule,
     ],
     controllers: [ChatController],
     providers: [

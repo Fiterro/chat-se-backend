@@ -7,7 +7,6 @@ export class MessageDto {
     readonly uuid: string;
     readonly sentAt: Date;
     readonly sender: User;
-    readonly isRead: boolean;
     readonly viewCount: number;
     readonly createdAt: Date;
     readonly updatedAt: Date;
@@ -18,7 +17,6 @@ export class MessageDto {
                 uuid: string,
                 sentAt: Date,
                 sender: User,
-                isRead: boolean,
                 viewCount: number,
                 createdAt: Date,
                 updatedAt: Date) {
@@ -28,7 +26,6 @@ export class MessageDto {
         this.uuid = uuid;
         this.sentAt = sentAt;
         this.sender = sender;
-        this.isRead = isRead;
         this.viewCount = viewCount;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;

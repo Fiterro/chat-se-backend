@@ -24,4 +24,7 @@ export class MessageRead extends Model<MessageRead> {
 
     @UpdatedAt
     updatedAt: Date;
+
+    // This field is for counter of messages read
+    countViews?: number;
 }

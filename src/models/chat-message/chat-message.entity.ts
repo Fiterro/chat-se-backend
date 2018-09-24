@@ -3,6 +3,7 @@ import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, Updated
 import {Chat} from "../chat/chat.entity";
 import {Message} from "../message/message.entity";
 import { MessageDto } from "../../dto/message.dto";
+import { Logger } from "@nestjs/common";
 
 @Scopes({
     limits(limit: number, offset: number) {
@@ -26,12 +27,6 @@ export class ChatMessage extends Model<ChatMessage> {
     @Column({field: "chat_id"})
     chatId: number;
 
-    @Column({field: "is_read"})
-    isRead: boolean;
-
-    @Column({field: "view_count"})
-    viewCount: number;
-
     @CreatedAt
     createdAt: Date;
 
@@ -44,7 +39,7 @@ export class ChatMessage extends Model<ChatMessage> {
     @BelongsTo(() => Message)
     message: Message;
 
-    toDTO(): MessageDto {
+    toDTO(viewCount = 0): MessageDto {
         return new MessageDto(
             this.message.id,
             this.chatId,
@@ -52,8 +47,7 @@ export class ChatMessage extends Model<ChatMessage> {
             this.message.uuid,
             this.message.sentAt,
             this.message.sender,
-            this.isRead,
-            this.viewCount,
+            viewCount,
             this.createdAt,
             this.updatedAt,
         );

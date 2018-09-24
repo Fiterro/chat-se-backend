@@ -6,7 +6,7 @@ import { ApiResponse } from "../interfaces/api-response";
  * Base controller class
  */
 export class ServerController {
-    public static success(res: Response, data: any, meta?: any) {
+    public static success(res: Response, data: any, meta?: any): Response {
         const response: ApiResponse = {
             status: 200,
             data,

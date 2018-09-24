@@ -6,6 +6,7 @@ import {
     HttpCode,
     HttpStatus,
     Inject,
+    NotFoundException,
     Post,
     Req,
     Res,
@@ -25,11 +26,15 @@ import { ServerController } from "../../classes/server-controller";
 import { REDIS_REPOS } from "../../app.constants";
 import { SessionEntity } from "./session.entity";
 import { RefreshSessionDto } from "../../dto/refresh-session.dto";
+import { config } from "../../../config";
+import { UserService } from "../user/user.service";
+import { AdminRoleDto } from "../../dto/admin-role.dto";
 
 @Controller("sessions")
 export class SessionController extends ServerController {
     constructor(private readonly authService: AuthService,
                 private readonly sessionService: SessionService,
+                private readonly userService: UserService,
                 @Inject(REDIS_REPOS.SESSION) private readonly sessionRepository: typeof SessionEntity) {
         super();
     }
@@ -74,6 +79,28 @@ export class SessionController extends ServerController {
             .catch(error => {
                 SessionController.failure(res, error);
             });
+    }
+
+    @Get("is-admin")
+    @AllowSessions(UserSessionDto)
+    @UseGuards(AuthGuard)
+    @HttpCode(HttpStatus.OK)
+    async getIsAdminRole(@Session() session: UserSessionDto, @Res() res): Promise<void> {
+        this.userService.getOne(session.userId)
+            .then((user) => {
+                if (!user) {
+                    throw new NotFoundException("User not found");
+                }
+
+                const googleId = Number(user.googleId);
+                const adminGoogleKeys = config.admin.googleKeys;
+                // @ts-ignore
+                SessionController.success(res, new AdminRoleDto(adminGoogleKeys.includes(googleId)));
+            })
+            .catch(error => {
+                SessionController.failure(res, error);
+            });
+        return;
     }
 
     @Post("refresh")

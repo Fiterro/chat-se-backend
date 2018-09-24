@@ -17,6 +17,9 @@ export const config = {
         host: "172.18.0.2",
         port: 6379,
     },
+    admin: {
+        googleKeys: [100625240442000504541],
+    },
     googleAuth: {
         GOOGLE_CONSUMER_KEY: "386387919756-hl25j9g3h7f2ehmo1khh0vu23u8dsf1c.apps.googleusercontent.com",
         GOOGLE_CONSUMER_SECRET: "YntjPkqO32fmu0uHnbPmGPcs",

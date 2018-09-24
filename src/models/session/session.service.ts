@@ -3,7 +3,7 @@ import { Sequelize, Transaction } from "sequelize";
 import { RedisClient } from "redis";
 import { Observable, Subject } from "rxjs";
 
-import {config} from "../../../config";
+import { config } from "../../../config";
 import { ISessionService } from "../../interfaces/session-service.interface";
 import { REDIS_REPOS, REDIS_TOKEN, SEQUELIZE_TOKEN } from "../../app.constants";
 import { SessionEntity } from "./session.entity";

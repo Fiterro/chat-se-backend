@@ -1,6 +1,7 @@
 import { Response } from "express";
 
 import { ApiResponse } from "../interfaces/api-response";
+import { HttpException, HttpStatus } from "@nestjs/common";
 
 /**
  * Base controller class
@@ -19,11 +20,12 @@ export class ServerController {
         return res.send(response);
     }
 
-    public static failure(res: Response, error: Error) {
+    public static failure(res: Response, error: HttpException) {
         const response: ApiResponse = {
-            status: 500,
-            data: error ? error.message : "Unknown internal error",
+            status: error ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR,
+            data: error ? error.message.message : "Unknown internal error",
         };
+        res.status(response.status);
 
         return res.send(response);
     }

@@ -1,5 +1,6 @@
 import {
     Body,
+    ConflictException,
     Controller,
     Get,
     HttpCode,
@@ -11,6 +12,7 @@ import {
     Query,
     Res,
     Session,
+    UnprocessableEntityException,
     UseGuards,
     UsePipes,
 } from "@nestjs/common";
@@ -31,6 +33,7 @@ import { MessageRead } from "../message-read/message-read.entity";
 import { AllowSessions } from "../../guards/allow-session";
 import { UserSessionDto } from "../../dto/user-session.dto";
 import { AuthGuard } from "../../guards/auth.guard";
+import { IsAdminGuard } from "../../guards/is-admin.guard";
 
 @Controller("chats")
 @AllowSessions(UserSessionDto)
@@ -42,35 +45,44 @@ export class ChatController extends ServerController {
     }
 
     @Get()
+    @HttpCode(HttpStatus.OK)
     async findAll(@Res() res): Promise<void> {
         return this.chatService.findAll()
             .then((result) => {
-                res.status(HttpStatus.OK);
                 ChatController.success(res, result);
             })
             .catch((error) => {
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ChatController.failure(res, error);
             });
     }
 
     @Post()
+    @UseGuards(IsAdminGuard)
     @UsePipes(new JoiValidationPipe(ChatSchema))
     @HttpCode(HttpStatus.CREATED)
     async createChat(@Body() body, @Res() res): Promise<void> {
-        return this.chatService.create(body.name)
+        const chatName = body.name.trim();
+        return this.chatService.findByName(chatName)
+            .then((chat) => {
+                if (chat) {
+                    throw new ConflictException("Chat already exist");
+                }
+                return this.chatService.create(chatName);
+            })
             .then((result) => {
                 ChatController.success(res, result);
             })
             .catch((error) => {
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ChatController.failure(res, error);
             });
     }
 
     @Get(":id")
     @HttpCode(HttpStatus.OK)
-    async findOne(@Res() res, @Param("id") id): Promise<void> {
+    async findOne(@Param("id") id, @Res() res): Promise<void> {
+        if (!id) {
+            throw new UnprocessableEntityException("Invalid user id");
+        }
         return this.chatService.getOne(id)
             .then((result) => {
                 if (!result) {
@@ -79,7 +91,6 @@ export class ChatController extends ServerController {
                 ChatController.success(res, result);
             })
             .catch((error) => {
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ChatController.failure(res, error);
             });
     }
@@ -87,6 +98,9 @@ export class ChatController extends ServerController {
     @Get(":id/messages")
     @HttpCode(HttpStatus.OK)
     async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination): Promise<void> {
+        if (!id) {
+            throw new UnprocessableEntityException("Invalid user id");
+        }
         return this.chatService.getOne(id)
             .then((result: Chat) => {
                 if (!result) {
@@ -95,11 +109,9 @@ export class ChatController extends ServerController {
                 return this.messagesService.findByChatId(result.id, new PaginationDto(query));
             })
             .then((result: MessageListDto) => {
-                // TODO: get data by messageId in message_read: group by messageId and count
                 ChatController.success(res, result.data, result.pagination);
             })
             .catch((error) => {
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ChatController.failure(res, error);
             });
     }
@@ -107,6 +119,9 @@ export class ChatController extends ServerController {
     @Get(":id/activity")
     @HttpCode(HttpStatus.OK)
     async getActivityByChatId(@Res() res, @Param("id") id, @Query() query: Pagination): Promise<void> {
+        if (!id) {
+            throw new UnprocessableEntityException("Invalid user id");
+        }
         return this.chatService.getOne(id)
             .then((result: Chat) => {
                 if (!result) {
@@ -118,7 +133,6 @@ export class ChatController extends ServerController {
                 ChatController.success(res, result);
             })
             .catch((error) => {
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ChatController.failure(res, error);
             });
     }
@@ -131,7 +145,6 @@ export class ChatController extends ServerController {
                 ChatController.success(res, result);
             })
             .catch((error) => {
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ChatController.failure(res, error);
             });
     }
@@ -148,7 +161,6 @@ export class ChatController extends ServerController {
                 ChatController.success(res, result);
             })
             .catch((error) => {
-                res.status(HttpStatus.INTERNAL_SERVER_ERROR);
                 ChatController.failure(res, error);
             });
     }

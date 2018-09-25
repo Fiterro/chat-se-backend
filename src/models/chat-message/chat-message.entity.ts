@@ -39,7 +39,7 @@ export class ChatMessage extends Model<ChatMessage> {
     @BelongsTo(() => Message)
     message: Message;
 
-    toDTO(viewCount = 0): MessageDto {
+    toDTO(viewCount = 0, isNew = false): MessageDto {
         return new MessageDto(
             this.message.id,
             this.chatId,
@@ -48,6 +48,7 @@ export class ChatMessage extends Model<ChatMessage> {
             this.message.sentAt,
             this.message.sender,
             viewCount,
+            isNew,
             this.createdAt,
             this.updatedAt,
         );

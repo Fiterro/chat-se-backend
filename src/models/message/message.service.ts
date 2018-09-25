@@ -24,13 +24,17 @@ export class MessagesService {
                 @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage) {
     }
 
-    async findByChatId(chatId: number, pagination: PaginationDto): Promise<MessageListDto> {
+    async findByChatId(chatId: number, pagination: PaginationDto, userId?: number): Promise<MessageListDto> {
         const messagesList: MessagesAndCount = await this.getMessagesList(chatId, pagination);
         const messageIds: number[] = messagesList.rows.map(message => message.id);
         const numberOfViews: MessageRead[] = await this.countViews(messageIds);
+        const messageIdsNew = userId ? await this.getNewMessages(messageIds, userId) : undefined;
         const messagesDto = messagesList.rows.map((message) => {
             const index = numberOfViews.findIndex((value) => value.messageId === message.id);
-            return index >= 0 ? message.toDTO(Number(numberOfViews[index].dataValues.countViews)) : message.toDTO();
+            const isNew = messageIdsNew.findIndex((value) => value === message.messageId) >= 0;
+            return index >= 0
+                ? message.toDTO(Number(numberOfViews[index].dataValues.countViews), isNew)
+                : message.toDTO(0, isNew);
         });
 
         return new MessageListDto(messagesDto, messagesList.count);
@@ -130,6 +134,31 @@ export class MessagesService {
                 attributes: ["messageId", [seq.fn("COUNT", seq.col("user_id")), "countViews"]],
                 order: ["messageId"],
                 group: ["messageId"],
+            });
+    }
+
+    private async getNewMessages(messagesIds: number[], userId: number): Promise<number[]> {
+        const seq = this.MessageReadRepository.sequelize;
+        return this.MessageReadRepository
+            .findAll({
+                where: {
+                    userId,
+                    messageId: {
+                        [Op.in]: messagesIds,
+                    },
+                },
+                attributes: ["messageId", [seq.fn("COUNT", seq.col("user_id")), "countViews"]],
+                order: ["messageId"],
+                group: ["messageId"],
+            })
+            .then((result) => {
+                return messagesIds.reduce((acc, id) => {
+                    // @ts-ignore
+                    if (!result.map((res) => res.messageId).includes(id)) {
+                        acc.push(id);
+                    }
+                    return acc;
+                }, []);
             });
     }
 

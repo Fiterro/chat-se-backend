@@ -1,5 +1,6 @@
 import { SubscribeMessage, WebSocketGateway, WebSocketServer } from "@nestjs/websockets";
 import { Server } from "socket.io";
+
 import { MessagesService } from "../message/message.service";
 import { ChatMessageDto } from "../../dto/chat-message.dto";
 import { InternalServerErrorException, Logger, UsePipes } from "@nestjs/common";
@@ -7,6 +8,7 @@ import { JoiValidationPipe } from "../../pipes/joi-validation.pipe";
 import { ChatMessageSchema } from "../../schemas/chat-message.schema";
 import { ChatMessage } from "../chat-message/chat-message.entity";
 import { MessageDto } from "../../dto/message.dto";
+import { MessageRead } from "../message-read/message-read.entity";
 
 @WebSocketGateway()
 export class EventsGateway {
@@ -18,7 +20,8 @@ export class EventsGateway {
     @SubscribeMessage("createMessage")
     @UsePipes(new JoiValidationPipe(ChatMessageSchema))
     onCreateMessageEvent(client, data: ChatMessageDto): Promise<void> {
-        return this.messagesService.create(data.chatId, data.text, data.senderId, data.uuid)
+        return this.messagesService
+            .create(data.chatId, data.text, data.senderId, data.uuid)
             .then((result: ChatMessage) => {
                 if (!result) {
                     throw new InternalServerErrorException("Message not created");
@@ -29,5 +32,14 @@ export class EventsGateway {
                 this.server.emit("message", result);
             })
             .catch((error) => Logger.error(error));
+    }
+
+    @SubscribeMessage("readMessages")
+    onReadMessages(client, data: number[]): Promise<void> {
+        return this.messagesService
+            .readMessages(data, 1)
+            .then((result: MessageRead[]) => {
+                this.server.emit("messagesRead", result);
+            });
     }
 }

@@ -20,10 +20,19 @@ export class ServerController {
         return res.send(response);
     }
 
-    public static failure(res: Response, error: HttpException) {
+    public static failure(res: Response, exception: any) {
+        const status = exception && (exception instanceof HttpException)
+            ? exception.getStatus()
+            : HttpStatus.INTERNAL_SERVER_ERROR;
+        let exceptionMessage;
+        if (exception instanceof HttpException) {
+            exceptionMessage = exception.message.message;
+        } else {
+            exceptionMessage = exception.message ? exception.message : "Unknown internal error";
+        }
         const response: ApiResponse = {
-            status: error ? error.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR,
-            data: error ? error.message.message : "Unknown internal error",
+            status,
+            data: exceptionMessage,
         };
         res.status(response.status);
 

@@ -97,7 +97,7 @@ export class ChatController extends ServerController {
 
     @Get(":id/messages")
     @HttpCode(HttpStatus.OK)
-    async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination): Promise<void> {
+    async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination, @Session() session: UserSessionDto): Promise<void> {
         if (!id) {
             throw new UnprocessableEntityException("Invalid user id");
         }
@@ -106,7 +106,7 @@ export class ChatController extends ServerController {
                 if (!result) {
                     throw new NotFoundException("Chat not found");
                 }
-                return this.messagesService.findByChatId(result.id, new PaginationDto(query));
+                return this.messagesService.findByChatId(result.id, new PaginationDto(query), session.userId);
             })
             .then((result: MessageListDto) => {
                 ChatController.success(res, result.data, result.pagination);

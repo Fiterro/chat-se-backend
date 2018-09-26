@@ -1,6 +1,7 @@
 import { Column, CreatedAt, ForeignKey, Model, Table, UpdatedAt } from "sequelize-typescript";
 import { Message } from "../message/message.entity";
 import { User } from "../user/user.entity";
+import { MessageReadDto } from "../../dto/message-read.dto";
 
 @Table({
     tableName: "message_read",
@@ -27,4 +28,8 @@ export class MessageRead extends Model<MessageRead> {
 
     // This field is for counter of messages read
     countViews?: number;
+
+    toDTO(countViews = 0): MessageReadDto {
+        return new MessageReadDto(this.messageId, this.userId, countViews);
+    }
 }

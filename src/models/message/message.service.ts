@@ -11,6 +11,7 @@ import { ActivityItemDto } from "../../dto/activity-item.dto";
 import { ParticipantShort } from "../../types/participant-short.type";
 import { MessageDto } from "../../dto/message.dto";
 import { MessageRead } from "../message-read/message-read.entity";
+import { MessageReadDto } from "../../dto/message-read.dto";
 
 interface MessagesAndCount {
     rows: ChatMessage[];
@@ -88,25 +89,24 @@ export class MessagesService {
             });
     }
 
-    async readMessages(messageIds: number[], userId: number): Promise<MessageRead[]> {
-        return await this.findReadMessages(messageIds, userId)
-            .then((readMessages) => {
-                const readIds: number[] = readMessages.map((message) => message.messageId);
-                const dataToCreate = messageIds
-                    .reduce((acc, val) => {
-                        // @ts-ignore
-                        if (!readIds.includes(val)) {
-                            acc.push({messageId: val, userId});
-                        }
-                        return acc;
-                    }, []);
-
-                return this.MessageReadRepository
-                    .bulkCreate<MessageRead>(dataToCreate)
-                    .then((result) => {
-                        return result;
-                    });
-            });
+    async readMessages(messageIds: number[], userId: number): Promise<MessageReadDto[]> {
+        const readMessages = await this.findReadMessages(messageIds, userId);
+        const readIds: number[] = readMessages.map((message) => message.messageId);
+        const dataToCreate = messageIds
+            .reduce((acc, val) => {
+                // @ts-ignore
+                if (!readIds.includes(val)) {
+                    acc.push({messageId: val, userId});
+                }
+                return acc;
+            }, []);
+        const messagesCreated = await this.MessageReadRepository.bulkCreate<MessageRead>(dataToCreate);
+        const numberOfViews: MessageRead[] = await this.countViews(messageIds);
+        return messagesCreated.map((message) => {
+            const countViews = numberOfViews.find((item) =>
+                Number(item.dataValues.messageId) === Number(message.dataValues.messageId)).dataValues.countViews;
+            return message.toDTO(Number(countViews));
+        });
     }
 
     async findReadMessages(messageIds: number[], userId: number): Promise<MessageRead[]> {

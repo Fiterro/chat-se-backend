@@ -11,6 +11,9 @@ import { ActivityItemDto } from "../../dto/activity-item.dto";
 import { ParticipantShort } from "../../types/participant-short.type";
 import { MessageDto } from "../../dto/message.dto";
 import { MessageRead } from "../message-read/message-read.entity";
+import { MessageReadDto } from "../../dto/message-read.dto";
+import { EventsGateway } from "../socket/events.gateway";
+import { SocketEvent } from "../socket/event.enum";
 
 interface MessagesAndCount {
     rows: ChatMessage[];
@@ -21,22 +24,27 @@ interface MessagesAndCount {
 export class MessagesService {
     constructor(@Inject(SEQUELIZE_REPOS.MESSAGES) private readonly MessageRepository: typeof Message,
                 @Inject(SEQUELIZE_REPOS.MESSAGE_READ) private readonly MessageReadRepository: typeof MessageRead,
-                @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage) {
+                @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage,
+                private readonly eventsGateway: EventsGateway) {
     }
 
-    async findByChatId(chatId: number, pagination: PaginationDto): Promise<MessageListDto> {
+    async findByChatId(chatId: number, pagination: PaginationDto, userId?: number): Promise<MessageListDto> {
         const messagesList: MessagesAndCount = await this.getMessagesList(chatId, pagination);
         const messageIds: number[] = messagesList.rows.map(message => message.id);
         const numberOfViews: MessageRead[] = await this.countViews(messageIds);
+        const messageIdsNew = userId ? await this.getNewMessages(messageIds, userId) : undefined;
         const messagesDto = messagesList.rows.map((message) => {
             const index = numberOfViews.findIndex((value) => value.messageId === message.id);
-            return index >= 0 ? message.toDTO(Number(numberOfViews[index].dataValues.countViews)) : message.toDTO();
+            const isNew = messageIdsNew.findIndex((value) => value === message.messageId) >= 0;
+            return index >= 0
+                ? message.toDTO(Number(numberOfViews[index].dataValues.countViews), isNew)
+                : message.toDTO(0, isNew);
         });
 
         return new MessageListDto(messagesDto, messagesList.count);
     }
 
-    async findOne(messageId: number): Promise<MessageDto> {
+    async findOne(messageId: number, viewCount = 0): Promise<MessageDto> {
         return await this.ChatMessagesRepository
             .findById(messageId, {
                 include: [{
@@ -45,7 +53,7 @@ export class MessagesService {
                 }],
             })
             .then((message: ChatMessage) => {
-                return message.toDTO();
+                return message.toDTO(viewCount);
             });
     }
 
@@ -84,25 +92,26 @@ export class MessagesService {
             });
     }
 
-    async readMessages(messageIds: number[], userId: number): Promise<MessageRead[]> {
-        return await this.findReadMessages(messageIds, userId)
-            .then((readMessages) => {
-                const readIds: number[] = readMessages.map((message) => message.messageId);
-                const dataToCreate = messageIds
-                    .reduce((acc, val) => {
-                        // @ts-ignore
-                        if (!readIds.includes(val)) {
-                            acc.push({messageId: val, userId});
-                        }
-                        return acc;
-                    }, []);
-
-                return this.MessageReadRepository
-                    .bulkCreate<MessageRead>(dataToCreate)
-                    .then((result) => {
-                        return result;
-                    });
-            });
+    async readMessages(messageIds: number[], userId: number): Promise<MessageReadDto[]> {
+        const readMessages = await this.findReadMessages(messageIds, userId);
+        const readIds: number[] = readMessages.map((message) => message.messageId);
+        const dataToCreate = messageIds
+            .reduce((acc, val) => {
+                // @ts-ignore
+                if (!readIds.includes(val)) {
+                    acc.push({messageId: val, userId});
+                }
+                return acc;
+            }, []);
+        const messagesCreated = await this.MessageReadRepository.bulkCreate<MessageRead>(dataToCreate);
+        const numberOfViews: MessageRead[] = await this.countViews(messageIds);
+        const data = messagesCreated.map((message) => {
+            const countViews = numberOfViews.find((item) =>
+                Number(item.dataValues.messageId) === Number(message.dataValues.messageId)).dataValues.countViews;
+            return message.toDTO(Number(countViews));
+        });
+        this.eventsGateway.emitEvent(SocketEvent.MessagesRead, data);
+        return data;
     }
 
     async findReadMessages(messageIds: number[], userId: number): Promise<MessageRead[]> {
@@ -130,6 +139,31 @@ export class MessagesService {
                 attributes: ["messageId", [seq.fn("COUNT", seq.col("user_id")), "countViews"]],
                 order: ["messageId"],
                 group: ["messageId"],
+            });
+    }
+
+    private async getNewMessages(messagesIds: number[], userId: number): Promise<number[]> {
+        const seq = this.MessageReadRepository.sequelize;
+        return this.MessageReadRepository
+            .findAll({
+                where: {
+                    userId,
+                    messageId: {
+                        [Op.in]: messagesIds,
+                    },
+                },
+                attributes: ["messageId", [seq.fn("COUNT", seq.col("user_id")), "countViews"]],
+                order: ["messageId"],
+                group: ["messageId"],
+            })
+            .then((result) => {
+                return messagesIds.reduce((acc, id) => {
+                    // @ts-ignore
+                    if (!result.map((res) => res.messageId).includes(id)) {
+                        acc.push(id);
+                    }
+                    return acc;
+                }, []);
             });
     }
 

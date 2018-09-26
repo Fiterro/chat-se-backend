@@ -1,9 +1,8 @@
 import { BelongsTo, Column, CreatedAt, ForeignKey, Model, Scopes, Table, UpdatedAt } from "sequelize-typescript";
 
-import {Chat} from "../chat/chat.entity";
-import {Message} from "../message/message.entity";
+import { Chat } from "../chat/chat.entity";
+import { Message } from "../message/message.entity";
 import { MessageDto } from "../../dto/message.dto";
-import { Logger } from "@nestjs/common";
 
 @Scopes({
     limits(limit: number, offset: number) {
@@ -39,7 +38,7 @@ export class ChatMessage extends Model<ChatMessage> {
     @BelongsTo(() => Message)
     message: Message;
 
-    toDTO(viewCount = 0): MessageDto {
+    toDTO(viewCount = 0, isNew = true): MessageDto {
         return new MessageDto(
             this.message.id,
             this.chatId,
@@ -48,6 +47,7 @@ export class ChatMessage extends Model<ChatMessage> {
             this.message.sentAt,
             this.message.sender,
             viewCount,
+            isNew,
             this.createdAt,
             this.updatedAt,
         );

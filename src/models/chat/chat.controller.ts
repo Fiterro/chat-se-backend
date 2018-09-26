@@ -34,13 +34,17 @@ import { AllowSessions } from "../../guards/allow-session";
 import { UserSessionDto } from "../../dto/user-session.dto";
 import { AuthGuard } from "../../guards/auth.guard";
 import { IsAdminGuard } from "../../guards/is-admin.guard";
+import { ChatMessage } from "../chat-message/chat-message.entity";
+import { EventsGateway } from "../socket/events.gateway";
+import { SocketEvent } from "../socket/event.enum";
 
 @Controller("chats")
 @AllowSessions(UserSessionDto)
 @UseGuards(AuthGuard)
 export class ChatController extends ServerController {
     constructor(private readonly chatService: ChatService,
-                private readonly messagesService: MessagesService) {
+                private readonly messagesService: MessagesService,
+                private readonly eventsGateway: EventsGateway) {
         super();
     }
 
@@ -97,7 +101,7 @@ export class ChatController extends ServerController {
 
     @Get(":id/messages")
     @HttpCode(HttpStatus.OK)
-    async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination): Promise<void> {
+    async getMessagesByChatId(@Res() res, @Param("id") id, @Query() query: Pagination, @Session() session: UserSessionDto): Promise<void> {
         if (!id) {
             throw new UnprocessableEntityException("Invalid user id");
         }
@@ -106,7 +110,7 @@ export class ChatController extends ServerController {
                 if (!result) {
                     throw new NotFoundException("Chat not found");
                 }
-                return this.messagesService.findByChatId(result.id, new PaginationDto(query));
+                return this.messagesService.findByChatId(result.id, new PaginationDto(query), session.userId);
             })
             .then((result: MessageListDto) => {
                 ChatController.success(res, result.data, result.pagination);
@@ -152,12 +156,19 @@ export class ChatController extends ServerController {
     @Post("messages")
     @HttpCode(HttpStatus.OK)
     @UsePipes(new JoiValidationPipe(ChatMessageSchema))
-    async sendMessage(@Body() body: ChatMessageDto, @Res() res): Promise<void> {
-        return this.messagesService.create(body.chatId, body.text, body.senderId, body.uuid)
-            .then((result) => {
+    async sendMessage(@Body() body: ChatMessageDto, @Res() res, @Session() session: UserSessionDto): Promise<void> {
+        return this.messagesService.create(body.chatId, body.text, session.userId, body.uuid)
+            .then((result: ChatMessage) => {
                 if (!result) {
                     throw new InternalServerErrorException("Message not created");
                 }
+                return this.messagesService.readMessages([result.id], session.userId);
+            })
+            .then((result) => {
+                return this.messagesService.findOne(result[0].messageId, result[0].countViews);
+            })
+            .then((result) => {
+                this.eventsGateway.server.emit(SocketEvent.Message, result);
                 ChatController.success(res, result);
             })
             .catch((error) => {

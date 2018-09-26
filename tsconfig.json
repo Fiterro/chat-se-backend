@@ -20,5 +20,6 @@
   "exclude": [
     "node_modules",
     "**/*.spec.ts"
-  ]
+  ],
+  "lib": ["ES7", "ES2017", "dom"]
 }

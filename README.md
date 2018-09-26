@@ -4,10 +4,13 @@
 
 self education backend project
 
+## Project setup
+Need to create copy of `config.bak` folder as `config` and edit configurations
+
 ## Installation
 
 ```bash
-$ npm install
+- $ npm install
 ```
 
 ## Running the app
@@ -23,7 +26,7 @@ $ npm run start:dev
 npm run start:prod
 ```
 
-## Test
+## Test (not supported yet)
 
 ```bash
 # unit tests

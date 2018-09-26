@@ -12,6 +12,8 @@ import { ParticipantShort } from "../../types/participant-short.type";
 import { MessageDto } from "../../dto/message.dto";
 import { MessageRead } from "../message-read/message-read.entity";
 import { MessageReadDto } from "../../dto/message-read.dto";
+import { EventsGateway } from "../socket/events.gateway";
+import { SocketEvent } from "../socket/event.enum";
 
 interface MessagesAndCount {
     rows: ChatMessage[];
@@ -22,7 +24,8 @@ interface MessagesAndCount {
 export class MessagesService {
     constructor(@Inject(SEQUELIZE_REPOS.MESSAGES) private readonly MessageRepository: typeof Message,
                 @Inject(SEQUELIZE_REPOS.MESSAGE_READ) private readonly MessageReadRepository: typeof MessageRead,
-                @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage) {
+                @Inject(SEQUELIZE_REPOS.CHAT_MESSAGES) private readonly ChatMessagesRepository: typeof ChatMessage,
+                private readonly eventsGateway: EventsGateway) {
     }
 
     async findByChatId(chatId: number, pagination: PaginationDto, userId?: number): Promise<MessageListDto> {
@@ -41,7 +44,7 @@ export class MessagesService {
         return new MessageListDto(messagesDto, messagesList.count);
     }
 
-    async findOne(messageId: number): Promise<MessageDto> {
+    async findOne(messageId: number, viewCount = 0): Promise<MessageDto> {
         return await this.ChatMessagesRepository
             .findById(messageId, {
                 include: [{
@@ -50,7 +53,7 @@ export class MessagesService {
                 }],
             })
             .then((message: ChatMessage) => {
-                return message.toDTO();
+                return message.toDTO(viewCount);
             });
     }
 
@@ -102,11 +105,13 @@ export class MessagesService {
             }, []);
         const messagesCreated = await this.MessageReadRepository.bulkCreate<MessageRead>(dataToCreate);
         const numberOfViews: MessageRead[] = await this.countViews(messageIds);
-        return messagesCreated.map((message) => {
+        const data = messagesCreated.map((message) => {
             const countViews = numberOfViews.find((item) =>
                 Number(item.dataValues.messageId) === Number(message.dataValues.messageId)).dataValues.countViews;
             return message.toDTO(Number(countViews));
         });
+        this.eventsGateway.emitEvent(SocketEvent.MessagesRead, data);
+        return data;
     }
 
     async findReadMessages(messageIds: number[], userId: number): Promise<MessageRead[]> {
